@@ -20,6 +20,7 @@
 #include <jni.h>
 #include <android/log.h>
 #include <assert.h>
+#include <stdlib.h>
 
 
 // Android log function wrappers
@@ -171,6 +172,29 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
     return  JNI_VERSION_1_6;
 }
 
+
+static void divZero(){
+    int i = 5/0;
+    if (i > 0) LOGI("i=5/0, i>0");
+}
+
+
+static void derefNull(){
+    int *p = NULL;
+    if (*p > 0) LOGI("p=NULL, *p>0");
+}
+
+static void oom(){
+    size_t inc_size = 1024;
+    int cnt=1024*1024;
+    int *p[cnt];
+
+    for (int i=0; i<cnt; ++i){
+        p[i] = malloc(inc_size);
+        LOGI("sum mem:%d(kb)", i);
+    }
+}
+
 /*
  * A helper function to wrap java JniHelper::updateStatus(String msg)
  * JNI allow us to call this function via an instance even it is
@@ -179,13 +203,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
 void   sendJavaMsg(JNIEnv *env, jobject instance,
                    jmethodID func,const char* msg) {
     jstring javaMsg = (*env)->NewStringUTF(env, msg);
-//    int *p = NULL;
-//    if (*p > 0)
-//        LOGI("*p > 0");
-//    int i=0, j=0, k;
-//    k = i/j;
-//    if (k>0)
-//        LOGI("k=i/0");
     (*env)->CallVoidMethod(env, instance, func, javaMsg);
     (*env)->DeleteLocalRef(env, javaMsg);
 }
@@ -268,9 +285,8 @@ Java_com_example_hellojnicallback_MainActivity_startTicks(JNIEnv *env, jobject i
     pthread_t       threadInfo_;
     pthread_attr_t  threadAttr_;
 
-//    int *p = NULL;
-//    if (*p > 0)
-//        LOGI("*p > 0");
+    //XXX just for test
+//    oom();
 
     pthread_attr_init(&threadAttr_);
     pthread_attr_setdetachstate(&threadAttr_, PTHREAD_CREATE_DETACHED);
