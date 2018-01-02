@@ -15,11 +15,17 @@
  */
 package com.example.hellojnicallback;
 
+import android.app.ActivityManager;
+import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.annotation.Keep;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     String TAG = "MainActivity";
@@ -28,12 +34,17 @@ public class MainActivity extends AppCompatActivity {
     int minute = 0;
     int second = 0;
     TextView tickView;
+    ActivityManager activityMgr;
+    ActivityManager.MemoryInfo memoryInfo;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
         setContentView(R.layout.activity_main);
         tickView = (TextView) findViewById(R.id.tickView);
+        activityMgr = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+        memoryInfo = new ActivityManager.MemoryInfo();
     }
     @Override
     public void onResume() {
@@ -57,6 +68,9 @@ public class MainActivity extends AppCompatActivity {
     @Keep
     private void updateTimer() {
         Log.i(TAG, "updateTimer");
+        //XXX just for test
+        oom();
+
         ++second;
         if(second >= 60) {
             ++minute;
@@ -82,4 +96,30 @@ public class MainActivity extends AppCompatActivity {
     public native  String stringFromJNI();
     public native void startTicks();
     public native void StopTicks();
+
+    // XXX just for test
+    private void divZero(){
+        int i = 5/0;
+        if (i > 0) Log.i(TAG, "i=5/0, i>0");
+    }
+
+
+    private void derefNull(){
+        Button btn = null;
+        Log.i(TAG, "try deref null...");
+        btn.findFocus();
+    }
+
+    private void oom(){
+        ArrayList<Bitmap> bitmapList = new ArrayList<>();
+        Bitmap bm;
+        int cnt=1024*1024;
+        for (int i=0; i<cnt; ++i){
+            bm = Bitmap.createBitmap(1280, 720, Bitmap.Config.ARGB_8888);
+            bitmapList.add(bm);
+            activityMgr.getMemoryInfo(memoryInfo);
+            Log.i(TAG, "bitmap count:"+i+" totalMem="+memoryInfo.totalMem+" used="+(memoryInfo.totalMem-memoryInfo.availMem));
+
+        }
+    }
 }
